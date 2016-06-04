@@ -12,7 +12,7 @@ const initialState = {
   token: localStorage.getItem('token'),
   username: localStorage.getItem('username'),
   _id: localStorage.getItem('_id'),
-  'error': ''
+  error: ''
 };
 
 const blankState = {

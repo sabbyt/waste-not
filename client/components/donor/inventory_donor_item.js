@@ -11,10 +11,7 @@ const InventoryDonorItem = props => {
         </header>
         <div className="card-content">
           <div className="content">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-            Phasellus nec iaculis mauris.
-            <br />
-            <span className="time-remain">2 hours remaining</span>
+            {props.description}
           </div>
         </div>
         <footer className="card-footer">
@@ -27,7 +24,8 @@ const InventoryDonorItem = props => {
 };
 
 InventoryDonorItem.propTypes = {
-  title: PropTypes.string
+  title: PropTypes.string,
+  description: PropTypes.string
 };
 
 export default InventoryDonorItem;

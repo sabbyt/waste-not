@@ -18,8 +18,13 @@ export const AUTH_ERROR = 'auth_error';
 export const AUTH_USER = 'auth_user';
 export const UNAUTH_USER = 'unauth_user';
 export const INVENTORY_ERROR = 'inventory_error';
+export const FETCH_ACTIVE_MAP_MARKER = 'fetch_active_map_marker';
+export const CLICK_MAP_MARKER = 'click_map_marker';
+export const CLOSE_MAP_MARKER = 'close_map_marker';
+export const TOGGLE_MAP_ON = 'toggle_map_on';
+export const TOGGLE_MAP_OFF = 'toggle_map_off';
 
-const ROOT_URL = 'http://localhost:3000/api';
+const ROOT_URL = `${__BASEURL__}/api`;
 
 const getAxiosConfig = () => {
   const token = localStorage.getItem('token');
@@ -33,31 +38,20 @@ const storeUser = ({ token, role, _id, username }) => {
   localStorage.setItem('username', username);
 };
 
-export function createUser(newUser) {
-  const request = axios.post(`${ROOT_URL}/signup`, newUser);
-
-  return {
-    type: CREATE_USER,
-    payload: request
-  };
-}
-
-export function createOrg(newOrg) {
+export function createOrg(newOrg, resolve, reject) {
   return dispatch => {
     axios.post(`${ROOT_URL}/signup`, newOrg)
       .then(response => {
         dispatch(authUser(response.data));
-        storeUser({
-          token: response.data.token,
-          role: newOrg.role,
-          _id: response.data._id,
-          username: newOrg.username
-        });
-        hashHistory.push(`/${newOrg.role}`);
+        const { token, role, _id, username } = response.data;
+        storeUser({ token, role, _id, username });
+        hashHistory.push(`${role}`);
+        resolve();
       })
-      .catch(response => {
-        console.log(response);
+      .catch(err => {
         dispatch(authError('Signup failed'));
+        console.log(err);
+        reject(err);
       });
   };
 }
@@ -115,6 +109,7 @@ export function fetchInventory() {
     axios.get(`${ROOT_URL}/inventory`)
       .then(response => {
         dispatch({ type: FETCH_INVENTORY, payload: response.data });
+
       })
       .catch(err => {
         console.log(err);
@@ -128,6 +123,7 @@ export function fetchActiveInventory() {
     axios.get(`${ROOT_URL}/inventory/active`)
       .then(response => {
         dispatch({ type: FETCH_ACTIVE, payload: response.data });
+        dispatch({ type: FETCH_ACTIVE_MAP_MARKER, payload: response.data });
       })
       .catch(err => {
         console.log(err);
@@ -175,10 +171,29 @@ export function deleteInventory(id) {
   };
 }
 
-export function setRole(role) {
+export function clickMapInfo(marker) {
   return {
-    type: SET_ROLE,
-    payload: role
+    type: CLICK_MAP_MARKER,
+    payload: marker
+  };
+}
+
+export function closeMapInfo(marker) {
+  return {
+    type: CLOSE_MAP_MARKER,
+    payload: marker
+  };
+}
+
+export function toggleMap() {
+  return {
+    type: TOGGLE_MAP_ON
+  };
+}
+
+export function toggleMapOff() {
+  return {
+    type: TOGGLE_MAP_OFF
   };
 }
 
@@ -197,7 +212,7 @@ export function authUser(data) {
   };
 }
 
-export function login(user) {
+export function login(user, resolve, reject) {
   const basic = window.btoa(`${user.username}:${user.password}`);
   return dispatch => {
     axios.get(`${ROOT_URL}/signin`, {
@@ -210,10 +225,12 @@ export function login(user) {
         const { token, role, _id, username } = response.data;
         storeUser({ token, role, _id, username });
         hashHistory.push(`${role}`);
+        resolve();
       })
       .catch(err => {
         console.log(err);
-        dispatch(authError('Bad Login Info'));
+        dispatch(authError(err));
+        reject({ _error: err.data.msg });
       });
   };
 }
